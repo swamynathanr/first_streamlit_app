@@ -1,6 +1,7 @@
 import streamlit
 import pandas
 import requests
+import snowflake.connector
 from urllib.error import URLError
 
 streamlit.title('My Parents New Healthy Diner')
@@ -39,18 +40,20 @@ except URLError as e:
   streamlit.error()
   streamlit.write('The user entered',fruit_choice)
 
-
-#Dont run anything below this line while troubleshooting  
-streamlit.stop()
-
-import snowflake.connector
-my_cnx = snowflake.connector.connect(**streamlit.secrets["snowflake"])
-my_cur = my_cnx.cursor()
-my_cur.execute("SELECT * from fruit_load_list")
-my_data_rows = my_cur.fetchall()
 streamlit.header("The fruit load list contains:")
-streamlit.dataframe(my_data_rows)
+def get_fruit_load_list():
+  with my_cnx.cursor() as my_cur:
+    my_cur.execute("SELECT * from fruit_load_list")
+    return my_cur.fetchall()
+  
+#Add a button to load the fruit  
+if streamlit.button("Get Fruit Load List"):
+  my_cnx = snowflake.connector.connect(**streamlit.secrets["snowflake"])
+  my_data_rows = get_fruit_load_list()
+  streamlit.dataframe(my_data_rows)
 
+  #Dont run anything below this line while troubleshooting  
+streamlit.stop()
 #Allow the end user to add the fruit to the list
 add_my_fruit = streamlit.text_input('what fruit would you like to add?', 'jackfruit')
 streamlit.write('Thanks for adding', add_my_fruit)
